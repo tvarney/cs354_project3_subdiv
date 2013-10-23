@@ -2,13 +2,13 @@
 # Project 2 Makefile
 EXEC := subdiv
 
-SRC  := .
-INC  := .
+SRC  := ./src
+INC  := ./inc
 CXX  := g++
 CC   := g++
 
-STD := -std=c++11
-FLAGS := -Wall -ggdb ${STD}
+STD := -std=c++0x
+FLAGS := -Wall -ggdb ${STD} -I${INC}
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)

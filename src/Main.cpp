@@ -24,11 +24,11 @@ int main(int argc, char **argv) {
                Window::RGB | Window::DOUBLE | Window::DEPTH);
     
     std::atexit(&cleanup);
-    
+
+    View::InitViewSystem(argc, argv, &win);
     draw = new DrawView();
     display = new DisplayView();
     
-    View::InitViewSystem(argc, argv, &win);
     View::EnterMainLoop(*draw);
     return 1;
 }
