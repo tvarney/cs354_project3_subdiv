@@ -45,13 +45,12 @@ namespace cs354 {
         virtual void entry(int state) = 0;
         virtual void idle() = 0;
         
-        void use();
-        void postRedisplay();
-        void timer(TimerFn_t timerfn, int value, int ms);
-        
         static void InitViewSystem(int argc, char **argv, Window *window);
         static void EnterMainLoop(View &initial);
         static void EndViewSystem();
+        static void RegisterTimer(TimerFn_t timerfn, int value, int ms);
+        static void PostRedisplay();
+        static void SetCurrent(View &view);
     protected:
         View();
     private:

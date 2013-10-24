@@ -8,7 +8,7 @@ CXX  := g++
 CC   := g++
 
 STD := -std=c++0x
-FLAGS := -Wall -ggdb ${STD} -I${INC}
+FLAGS := -Wall -ggdb -O3 ${STD} -I${INC}
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)

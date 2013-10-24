@@ -3,122 +3,118 @@
 #define CS354_GENERIC_VECTOR_HPP
 
 #include <cmath>
+#include <ostream>
+
+#include "Triple.hpp"
 
 namespace cs354 {
-    /* Vector<T>
-     * A 3 dimensional vector.
-     * Should only be used with primitives or very simple types you don't mind
-     * copying around.
-     * I really don't like templates, but eh.
-     */
-    template <typename T> struct Vector {
-        /* Constructors/Destructor */
-        Vector(const Vector<T> &vec) :
-            x(vec.x), y(vec.y), z(vec.z)
-        { }
+    template <typename T>
+    struct Vector {
+        union {
+            Triple<T> c;
+            T data[3];
+        };
+        
+        Vector() { }
         Vector(T x, T y, T z) :
-            x(x), y(y), z(z)
+            c(x, y, z)
         { }
-        Vector(T args[3]) :
-            x(args[0]), y(args[1]), z(args[2])
+        Vector(const T data[3]) :
+            c(data[0], data[1], data[2])
+        { }
+        Vector(const Vector<T> &source) :
+            c(source.data[0], source.data[1], source.data[2])
         { }
         ~Vector() { }
         
-        /* Operators */
-        /* Operator: +v1 */
         Vector<T> operator+() const {
             return Vector<T>(*this);
         }
-        /* Operator: -v1 */
         Vector<T> operator-() const {
-            return Vector<T>(-x, -y, -z);
+            return Vector<T>(-data[0], -data[1], -data[2]);
         }
-        
-        /* Operator: v1 + v2 */
-        Vector<T> operator+(const Vector<T> &rhs) const {
-            return Vector<T>(x + rhs.x, y + rhs.y, z + rhs.z);
+        Vector<T> operator+(const Vector &rhs) const {
+            return Vector<T>(data[0] + rhs.data[0], data[1] + rhs.data[1],
+                             data[2] + rhs.data[2]);
         }
-        /* Operator: v1 += v2 */
-        Vector<T> & operator+=(const Vector<T> &rhs) {
-            x += rhs.x;
-            y += rhs.y;
-            z += rhs.z;
-            return (*this);
+        Vector<T> operator-(const Vector &rhs) const {
+            return Vector<T>(data[0] - rhs.data[0], data[1] - rhs.data[1],
+                             data[2] + rhs.data[2]);
         }
-        /* Operator: v1 - v2 */
-        Vector<T> operator-(const Vector<T> &rhs) const {
-            return Vector<T>(x - rhs.x, y - rhs.y, z - rhs.z);
+        Vector<T> operator*(const Vector &rhs) const {
+            return Vector<T>(data[1] * rhs.data[2] - data[2] * rhs.data[1],
+                             data[0] * rhs.data[2] - data[2] * rhs.data[0],
+                             data[0] * rhs.data[1] - data[1] * rhs.data[0]);
         }
-        /* Operator: v1 -= v2 */
-        Vector<T> & operator-=(const Vector<T> &rhs) {
-            x -= rhs.x;
-            y -= rhs.y;
-            z -= rhs.z;
-            return (*this);
+        Vector<T> operator/(const Vector &rhs) const {
+            return Vector<T>(data[1] / rhs.data[2] - data[2] / rhs.data[1],
+                             data[0] / rhs.data[2] - data[2] / rhs.data[0],
+                             data[0] / rhs.data[1] - data[1] / rhs.data[0]);
         }
-        /* Operator: v1 * s */
         Vector<T> operator*(T scalar) const {
-            return Vector<T>(x * scalar, y * scalar, z * scalar);
+            return Vector<T>(data[0]*scalar, data[1]*scalar, data[2]*scalar);
         }
-        /* Operator: v1 *= s */
-        Vector<T> & operator*=(T scalar) {
-            x *= scalar;
-            y *= scalar;
-            z *= scalar;
-            return (*this);
+        Vector<T> operator/(T scalar) const {
+            return Vector<T>(data[0]/scalar, data[1]/scalar, data[2]/scalar);
         }
         
-        /* Operator: v1 * v2 */
-        Vector<T> operator*(const Vector<T> &rhs) const {
-            return Vector<T>(y * rhs.z - z * rhs.y,
-                             z * rhs.x - x * rhs.z,
-                             x * rhs.y - y * rhs.x);
+        Vector<T> inverse() const {
+            return Vector<T>(((T)1.0)/data[0], ((T)1.0)/data[1],
+                             ((T)1.0)/data[2]);
         }
-        /* Operator: v1 *= v2 */
-        Vector<T> & operator*=(const Vector<T> &rhs) const {
-            return (*this = *this * rhs);
+        Vector<T> normalize() const {
+            return *this / magnitude();
+        }
+        Vector<T> shuffle(int xs, int ys, int zs) const {
+            return Vector<T>(data[xs], data[ys], data[zs]);
         }
         
-        /* Operator: v1 = v2 */
+        T dot(const Vector &rhs) const {
+            return data[0]*rhs.data[0] + data[1]*rhs.data[1] +
+                data[2]*rhs.data[2];
+        }
+        T magsquared() const {
+            return data[0]*data[0] + data[1]*data[1] + data[2]*data[2];
+        }
+        T magnitude() const {
+            return std::sqrt(magsquared());
+        }
+        
         Vector<T> & operator=(const Vector<T> &rhs) {
-            x = rhs.x;
-            y = rhs.y;
-            z = rhs.z;
-            return (*this);
+            data[0] = rhs.data[0];
+            data[1] = rhs.data[1];
+            data[2] = rhs.data[2];
+            return *this;
         }
-        /* Operator: v1[i] */
-        T operator[](size_t index) {
-            switch(index) {
-            case 1:
-                return x;
-            case 2:
-                return y;
-            case 3:
-                return z;
-            default:
-                return 0;
-            }
+        Vector<T> & operator+=(const Vector<T> &rhs) {
+            return *this = *this + rhs;
         }
-        
-        /* Normalize the vector */
-        Vector<T> & normalize() {
-            T len = std::sqrt(x * x + y * y + z * z);
-            x /= len;
-            y /= len;
-            z /= len;
-            return (*this);
-        };
-        
-        union {
-            T data[3];
-            struct {
-                T x, y, z;
-            };
-        };
+        Vector<T> & operator-=(const Vector<T> &rhs) {
+            return *this = *this - rhs;
+        }
+        Vector<T> & operator*=(const Vector<T> &rhs) {
+            return *this = *this * rhs;
+        }
+        Vector<T> & operator/=(const Vector<T> &rhs) {
+            return *this = *this / rhs;
+        }
+        Vector<T> & operator*=(T scalar) {
+            return *this = *this * scalar;
+        }
+        Vector<T> & operator/=(T scalar) {
+            return *this = *this / scalar;
+        }
     };
     
-    typedef Vector<float> Vector3f;
     typedef Vector<double> Vector3d;
+    typedef Vector<float> Vector3f;
+    
+    template <typename T>
+    std::ostream & operator<<(std::ostream &out, const Vector<T> &vec) {
+        out << "<" << vec.data[0] << ", " << vec.data[1] << ", " <<
+            vec.data[2] << ">";
+        return out;
+    }
 }
 
 #endif
