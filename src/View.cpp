@@ -36,21 +36,6 @@ bool View::Init = false;
 View::View() { }
 View::~View() { }
 
-void View::use() {
-    if(View::CurrentView) {
-        View::CurrentView->end();
-    }
-    View::CurrentView = this;
-    init();
-}
-void View::postRedisplay() {
-    glutPostRedisplay();
-}
-
-void View::timer(TimerFn_t timerfn, int value, int ms) {
-    glutTimerFunc(ms, timerfn, value);
-}
-
 void View::InitViewSystem(int argc, char **argv, Window *window) {
     if(!View::Init) {
         glutInit(&argc, argv);
@@ -78,10 +63,10 @@ void View::InitViewSystem(int argc, char **argv, Window *window) {
 
 void View::EnterMainLoop(View &initial) {
     if(View::CurrentView == NULL) {
-        initial.use();
+        View::SetCurrent(initial);
         glutMainLoop();
     }else {
-        initial.use();
+        View::SetCurrent(initial);
     }
 }
 
@@ -99,6 +84,21 @@ void View::EndViewSystem() {
     glutPassiveMotionFunc(NULL);
     glutEntryFunc(NULL);
     glutIdleFunc(NULL);
+}
+void View::RegisterTimer(TimerFn_t timerfn, int value, int ms) {
+    glutTimerFunc(ms, timerfn, value);
+}
+
+void View::PostRedisplay() {
+    glutPostRedisplay();
+}
+void View::SetCurrent(View &view) {
+    if(View::CurrentView != NULL) {
+        View::CurrentView->end();
+    }
+    View::CurrentView = &view;
+    view.init();
+    PostRedisplay();
 }
 
 void View::DisplayCallback() {

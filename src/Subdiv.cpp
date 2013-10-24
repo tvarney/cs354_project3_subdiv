@@ -16,7 +16,7 @@ void DrawView::init() { }
 void DrawView::end() { }
 
 void DrawView::keyPressed(int ch) {
-    cs354::display->use();
+    View::SetCurrent(*(cs354::display));
 }
 
 DisplayView::DisplayView() { }
@@ -30,5 +30,5 @@ void DisplayView::init() { }
 void DisplayView::end() { }
 
 void DisplayView::keyPressed(int ch) {
-    cs354::draw->use();
+    View::SetCurrent(*(cs354::draw));
 }
