@@ -25,6 +25,8 @@ void DrawView::display() {
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
+    glViewport(0,0,win.dim.width,win.dim.height);
+    
     float mid_x = float(win.dim.width) * 0.5;
     float mid_y = float(win.dim.height) * 0.5;
     
@@ -51,19 +53,20 @@ void DrawView::display() {
     size_t i, size;
     size = points.size();
     
-    if(size > 1) {
+    if(size >= 1) {
         glColor3f(0.4,0,0);
         glBegin(GL_LINE_STRIP);
         for(i = 0; i < size; ++i) {
             glVertex2f(points[i].x, points[i].y);
         }
         glEnd();
-    }
-    
-    glBegin(GL_POINTS);
-    glColor3f(0.8,0,0);
-    for(i = 0; i < size; ++i) {
-        glVertex2f(points[i].x, points[i].y);
+        glBegin(GL_POINTS);
+        glColor3f(0.8,0,0);
+        for(i = 0; i < size - 1; ++i) {
+            glVertex2f(points[i].x, points[i].y);
+        }
+        glColor3f(0.9, 0.9, 0.9);
+        glVertex2f(points[size - 1].x, points[size - 1].y);
     }
     glEnd();
 }
@@ -96,8 +99,6 @@ void DrawView::keyPressed(int ch) {
 }
 void DrawView::mousePressed(MouseButton button, ButtonState state) {
     if(state == BUTTON_DOWN) {
-        std::cout << "Mouse Pressed (" << mouse.pos.x << ", " <<
-            mouse.pos.y << ")" << std::endl;
         Point mousepos(calcMousePos());
         switch(button) {
         case MOUSE_BUTTON_LEFT:
@@ -112,10 +113,13 @@ void DrawView::mousePressed(MouseButton button, ButtonState state) {
             }
             if(mouse_mode) {
                 size_t index = 0;
+                float next;
                 float closest = DistSquared(mousepos, points[0]);
                 for(size_t i = 1; i < points.size(); ++i) {
-                    if(DistSquared(mousepos, points[i]) < closest) {
+                    next = DistSquared(mousepos, points[i]);
+                    if(next < closest) {
                         index = i;
+                        closest = next;
                     }
                 }
                 points.erase(points.begin()+index);
