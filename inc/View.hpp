@@ -20,12 +20,30 @@ namespace cs354 {
         BUTTON_UP = 0,
         BUTTON_DOWN = 1
     };
-
-#define ADJUST_GLUT_KEYCODE(code) ((code) << 16)
-    extern const int KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6;
-    extern const int KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_F11, KEY_F12;
-    extern const int KEY_LEFT, KEY_UP, KEY_RIGHT, KEY_DOWN, KEY_PAGE_UP;
-    extern const int KEY_PAGE_DOWN, KEY_HOME, KEY_END, KEY_INSERT;
+    
+    enum Key {
+        KEY_F1        = 0x0100,
+        KEY_F2        = 0x0200,
+        KEY_F3        = 0x0300,
+        KEY_F4        = 0x0400,
+        KEY_F5        = 0x0500,
+        KEY_F6        = 0x0600,
+        KEY_F7        = 0x0700,
+        KEY_F8        = 0x0800,
+        KEY_F9        = 0x0900,
+        KEY_F10       = 0x0A00,
+        KEY_F11       = 0x0B00,
+        KEY_F12       = 0x0C00,
+        KEY_LEFT      = 0x6400,
+        KEY_UP        = 0x6500,
+        KEY_RIGHT     = 0x6600,
+        KEY_DOWN      = 0x6700,
+        KEY_PAGE_UP   = 0x6800,
+        KEY_PAGE_DOWN = 0x6900,
+        KEY_HOME      = 0x6A00,
+        KEY_END       = 0x6B00,
+        KEY_INSERT    = 0x6C00
+    };
     
     class View {
     public:

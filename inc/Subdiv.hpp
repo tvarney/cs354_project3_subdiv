@@ -4,7 +4,19 @@
 
 #include "View.hpp"
 
+#include <vector>
+
 namespace cs354 {
+    struct Point {
+        float x,y;
+        Point();
+        Point(float x, float y);
+        Point(const Point &source);
+        ~Point();
+    };
+    
+    float DistSquared(Point &p1, Point &p2);
+    
     class DrawView : public BasicView {
     public:
         DrawView();
@@ -15,8 +27,12 @@ namespace cs354 {
         virtual void end();
         
         virtual void keyPressed(int ch);
+        virtual void mousePressed(MouseButton button, ButtonState state);
     protected:
+        Point calcMousePos();
         
+        std::vector<Point> points;
+        bool mouse_mode, snap_mode;
     };
     
     class DisplayView : public BasicView {
@@ -29,8 +45,10 @@ namespace cs354 {
         virtual void end();
         
         virtual void keyPressed(int ch);
-    protected:
         
+        void process(std::vector<Point> &points);
+    protected:
+        float scale;
     };
     
     /* Handles to our two views */

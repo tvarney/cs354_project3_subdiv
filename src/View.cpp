@@ -7,29 +7,6 @@
 
 using namespace cs354;
 
-#define ADJUST_GLUT_KEYCODE(code) ((code) << 16)
-const int cs354::KEY_F1 = ADJUST_GLUT_KEYCODE(GLUT_KEY_F1);
-const int cs354::KEY_F2 = ADJUST_GLUT_KEYCODE(GLUT_KEY_F2);
-const int cs354::KEY_F3 = ADJUST_GLUT_KEYCODE(GLUT_KEY_F3);
-const int cs354::KEY_F4 = ADJUST_GLUT_KEYCODE(GLUT_KEY_F4);
-const int cs354::KEY_F5 = ADJUST_GLUT_KEYCODE(GLUT_KEY_F5);
-const int cs354::KEY_F6 = ADJUST_GLUT_KEYCODE(GLUT_KEY_F6);
-const int cs354::KEY_F7 = ADJUST_GLUT_KEYCODE(GLUT_KEY_F7);
-const int cs354::KEY_F8 = ADJUST_GLUT_KEYCODE(GLUT_KEY_F8);
-const int cs354::KEY_F9 = ADJUST_GLUT_KEYCODE(GLUT_KEY_F9);
-const int cs354::KEY_F10 = ADJUST_GLUT_KEYCODE(GLUT_KEY_F10);
-const int cs354::KEY_F11 = ADJUST_GLUT_KEYCODE(GLUT_KEY_F11);
-const int cs354::KEY_F12 = ADJUST_GLUT_KEYCODE(GLUT_KEY_F12);
-const int cs354::KEY_LEFT = ADJUST_GLUT_KEYCODE(GLUT_KEY_LEFT);
-const int cs354::KEY_UP = ADJUST_GLUT_KEYCODE(GLUT_KEY_UP);
-const int cs354::KEY_RIGHT = ADJUST_GLUT_KEYCODE(GLUT_KEY_RIGHT);
-const int cs354::KEY_DOWN = ADJUST_GLUT_KEYCODE(GLUT_KEY_DOWN);
-const int cs354::KEY_PAGE_UP = ADJUST_GLUT_KEYCODE(GLUT_KEY_PAGE_UP);
-const int cs354::KEY_PAGE_DOWN = ADJUST_GLUT_KEYCODE(GLUT_KEY_PAGE_DOWN);
-const int cs354::KEY_HOME = ADJUST_GLUT_KEYCODE(GLUT_KEY_HOME);
-const int cs354::KEY_END = ADJUST_GLUT_KEYCODE(GLUT_KEY_END);
-const int cs354::KEY_INSERT = ADJUST_GLUT_KEYCODE(GLUT_KEY_INSERT);
-
 View * View::CurrentView = NULL;
 bool View::Init = false;
 
@@ -124,6 +101,7 @@ void View::KeyboardCallback(unsigned char ch, int x, int y) {
         View::CurrentView->keyPressed(ch);
     }
 }
+#define ADJUST_GLUT_KEYCODE(ch) ((ch) << 8)
 void View::SpecialCallback(int ch, int x, int y) {
     if(View::CurrentView) {
         View::CurrentView->keyPressed(ADJUST_GLUT_KEYCODE(ch));
@@ -135,13 +113,13 @@ void View::MouseCallback(int button, int state, int x, int y) {
         ButtonState mState = (state == GLUT_UP ? BUTTON_UP : BUTTON_DOWN);
         switch(button) {
         case GLUT_LEFT_BUTTON:
-            button = MOUSE_BUTTON_LEFT;
+            mButton = MOUSE_BUTTON_LEFT;
             break;
         case GLUT_RIGHT_BUTTON:
-            button = MOUSE_BUTTON_RIGHT;
+            mButton = MOUSE_BUTTON_RIGHT;
             break;
         case GLUT_MIDDLE_BUTTON:
-            button = MOUSE_BUTTON_MIDDLE;
+            mButton = MOUSE_BUTTON_MIDDLE;
             break;
         default:
             return;
