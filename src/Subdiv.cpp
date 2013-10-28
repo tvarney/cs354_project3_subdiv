@@ -35,11 +35,11 @@ void DrawView::display() {
     glPointSize(3.0);
     
     glBegin(GL_LINES); {
-        glColor3f(0, 0.3, 0);
+        glColor3f(0, 0.5, 0);
         glVertex2f(0, -mid_y);
         glVertex2f(0, mid_y);
         
-        glColor3f(0, 0, 0.3);
+        glColor3f(0, 0, 0.5);
         glVertex2f(-mid_x, 0);
         glVertex2f(mid_x, 0);
     } glEnd();
@@ -48,19 +48,31 @@ void DrawView::display() {
     size = points.size();
     
     if(size >= 1) {
+        Point3f mpos(calcMousePos());
         glColor3f(0.4,0,0);
         glBegin(GL_LINE_STRIP);
         for(i = 0; i < size; ++i) {
             glVertex2f(points[i].x, points[i].y);
         }
+        if(mouse.state & MOUSE_BUTTON_LEFT) {
+            glVertex2f(mpos.x, mpos.y);
+        }
         glEnd();
         glBegin(GL_POINTS);
         glColor3f(0.8,0,0);
-        for(i = 0; i < size - 1; ++i) {
-            glVertex2f(points[i].x, points[i].y);
+        if(mouse.state & MOUSE_BUTTON_LEFT) {
+            for(i = 0; i < size; ++i) {
+                glVertex2f(points[i].x, points[i].y);
+            }
+            glColor3f(0.9,0.9,0.9);
+            glVertex2f(mpos.x, mpos.y);
+        }else {
+            for(i = 0; i < size - 1; ++i) {
+                glVertex2f(points[i].x, points[i].y);
+            }
+            glColor3f(0.9, 0.9, 0.9);
+            glVertex2f(points[size - 1].x, points[size - 1].y);
         }
-        glColor3f(0.9, 0.9, 0.9);
-        glVertex2f(points[size - 1].x, points[size - 1].y);
     }
     glEnd();
 }
@@ -68,7 +80,6 @@ void DrawView::init() { }
 void DrawView::end() { }
 
 void DrawView::keyPressed(int ch) {
-    std::cout << "Keycode: " << ch << std::endl;
     switch(ch) {
     case 'q':
         std::exit(0);
@@ -94,7 +105,9 @@ void DrawView::keyPressed(int ch) {
 }
 
 void DrawView::mousePressed(MouseButton button, ButtonState state) {
-    if(state == BUTTON_DOWN) {
+    BasicView::mousePressed(button, state);
+    
+    if(state == BUTTON_UP) {
         Point3f mousepos(calcMousePos());
         switch(button) {
         case MOUSE_BUTTON_LEFT:
@@ -131,6 +144,13 @@ void DrawView::mousePressed(MouseButton button, ButtonState state) {
     }
 }
 
+void DrawView::motion(int x, int y) {
+    BasicView::motion(x, y);
+    if(mouse.state & MOUSE_BUTTON_LEFT) {
+        View::PostRedisplay();
+    }
+}
+
 Point3f DrawView::calcMousePos() {
     int x = mouse.pos.x - win.dim.width / 2;
     int y = mouse.pos.y - win.dim.height / 2;
@@ -160,29 +180,23 @@ DisplayView::~DisplayView() {
 }
 
 void DisplayView::display() {
+    glViewport(0,0,win.dim.width, win.dim.height);
+    
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    glViewport(0,0,win.dim.width, win.dim.height);
-    
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    std::cout << "Window aspect ratio: " << win.aspect_ratio << std::endl;
-    gluPerspective(85, win.aspect_ratio, 1.0, 100.0);
-    /*
-    glOrtho(-win.dim.width / 2.0, win.dim.width / 2.0,
-            -win.dim.height / 2.0, win.dim.height / 2.0,
-            -50.0, 50.0);
-    */
+    gluPerspective(45, win.aspect_ratio, 1.0, 101.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    //Matrix<float> la = Matrix<float>::LookAt(0,0,50);
-    //glLoadMatrixf(&(la.data[0]));
-    gluLookAt(0, 0, 0, 0, 0, 50.0, 0, 1, 0);
+    gluLookAt(0, 0, 0,
+              0, 0, 15.0,
+              0, 1, 0);
     
-    glEnable(GL_DEPTH_TEST);
-    
-    glColor3f(1.0, 0.0, 0.0);
     switch(display_mode) {
     case DISPLAY_MODE_POINTS:
         display_points();
@@ -383,22 +397,10 @@ void DisplayView::display_wire() {
     }glEnd();
 }
 void DisplayView::display_gouraud() {
-    glBegin(GL_QUADS); {
-        glColor3f(1.0, 0, 0);
-        glVertex3f(100, 100, 0);
-        glColor3f(0.0, 1.0, 0);
-        glVertex3f(100, -100, 0);
-        glColor3f(0.0, 0.0, 1.0);
-        glVertex3f(-100, -100, 0);
-        glColor3f(0.0, 0.0, 0.0);
-        glVertex3f(-100, 100, 0);
-    } glEnd();
-    
-    
-    /*
     std::cout << "Displaying Gouraud" << std::endl;
     size_t nelements = elements.size() / 3;
     Point3f &p1 = dummy, &p2 = dummy, &p3 = dummy;
+    glColor3f(1.0, 1.0, 1.0);
     glBegin(GL_TRIANGLES); {
         for(size_t i = 0; i < nelements; i += 1) {
             p1 = points[elements[i*3]];
@@ -410,7 +412,6 @@ void DisplayView::display_gouraud() {
             glVertex3f(p3.x, p3.y, p3.z);
         }
     }glEnd();
-    */
 }
 void DisplayView::display_phong() {
     std::cout << "Display: Phong not implemented" << std::endl;

@@ -172,9 +172,10 @@ void BasicView::idle() { }
 void BasicView::mousePressed(MouseButton button, ButtonState state) {
     uint32_t bmask = (uint32_t)button;
     if(state == BUTTON_UP) {
-        bmask = ~bmask;
+        mouse.state &= ~bmask;
+    }else {
+        mouse.state |= bmask;
     }
-    mouse.state |= bmask;
 }
 
 void BasicView::passiveMotion(int x, int y) {

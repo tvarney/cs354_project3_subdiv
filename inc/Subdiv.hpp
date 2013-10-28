@@ -19,6 +19,7 @@ namespace cs354 {
         
         virtual void keyPressed(int ch);
         virtual void mousePressed(MouseButton button, ButtonState state);
+        virtual void motion(int x, int y);
     protected:
         Point3f calcMousePos();
         
