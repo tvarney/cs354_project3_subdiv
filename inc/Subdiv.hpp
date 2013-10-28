@@ -2,21 +2,12 @@
 #ifndef CS354_PROJECT3_SUBDIV_HPP
 #define CS354_PROJECT3_SUBDIV_HPP
 
+#include <vector>
+#include "Point.hpp"
+#include "Vector.hpp"
 #include "View.hpp"
 
-#include <vector>
-
 namespace cs354 {
-    struct Point {
-        float x,y;
-        Point();
-        Point(float x, float y);
-        Point(const Point &source);
-        ~Point();
-    };
-    
-    float DistSquared(Point &p1, Point &p2);
-    
     class DrawView : public BasicView {
     public:
         DrawView();
@@ -29,9 +20,9 @@ namespace cs354 {
         virtual void keyPressed(int ch);
         virtual void mousePressed(MouseButton button, ButtonState state);
     protected:
-        Point calcMousePos();
+        Point3f calcMousePos();
         
-        std::vector<Point> points;
+        std::vector<Point3f> points;
         bool mouse_mode, snap_mode;
     };
     
@@ -46,9 +37,22 @@ namespace cs354 {
         
         virtual void keyPressed(int ch);
         
-        void process(std::vector<Point> &points);
+        void process(std::vector<Point3f> &points);
     protected:
-        float scale;
+        void display_points();
+        void display_wire();
+        void display_gouraud();
+        void display_phong();
+        
+        float scale, rotation_y, rotation_z;
+        unsigned int vertical, horizontal;
+        int display_mode;
+        
+        size_t npoints;
+        Point3f *points;
+        std::vector<unsigned int> elements;
+        std::vector<Vector3f> normals;
+        unsigned int display_list;
     };
     
     /* Handles to our two views */
