@@ -77,8 +77,8 @@ void DrawView::keyPressed(int ch) {
     case '?':
     case KEY_RIGHT:
     case KEY_LEFT:
-        reinterpret_cast<DisplayView *>(cs354::display)->process(points);
         View::SetCurrent(*(cs354::display));
+        reinterpret_cast<DisplayView *>(cs354::display)->process(points);
         break;
     case 'm':
         mouse_mode = !mouse_mode;
@@ -156,17 +156,33 @@ DisplayView::DisplayView() :
     points(NULL), elements(), display_list(0)
 { }
 DisplayView::~DisplayView() {
-    /*
-    if(display_list != 0) {
-    
-    }
-    */
+    end();
 }
 
 void DisplayView::display() {
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
+    glViewport(0,0,win.dim.width, win.dim.height);
+    
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    std::cout << "Window aspect ratio: " << win.aspect_ratio << std::endl;
+    gluPerspective(85, win.aspect_ratio, 1.0, 100.0);
+    /*
+    glOrtho(-win.dim.width / 2.0, win.dim.width / 2.0,
+            -win.dim.height / 2.0, win.dim.height / 2.0,
+            -50.0, 50.0);
+    */
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    //Matrix<float> la = Matrix<float>::LookAt(0,0,50);
+    //glLoadMatrixf(&(la.data[0]));
+    gluLookAt(0, 0, 0, 0, 0, 50.0, 0, 1, 0);
+    
+    glEnable(GL_DEPTH_TEST);
+    
+    glColor3f(1.0, 0.0, 0.0);
     switch(display_mode) {
     case DISPLAY_MODE_POINTS:
         display_points();
@@ -195,7 +211,7 @@ void DisplayView::init() {
     rotation_z = 0.0f;
     vertical = 0;
     horizontal = 0;
-    display_mode = DISPLAY_MODE_WIRE;
+    display_mode = DISPLAY_MODE_GOURAUD;
 }
 void DisplayView::end() {
     if(display_list != 0) {
@@ -204,9 +220,10 @@ void DisplayView::end() {
     }
     
     if(points != NULL) {
-        delete points;
+        delete [] points;
         elements.clear();
         normals.clear();
+        points = NULL;
     }
 }
 
@@ -241,10 +258,13 @@ void DisplayView::keyPressed(int ch) {
 
 void DisplayView::process(std::vector<Point3f> &points) {
     init();
+    if(this->points != NULL) {
+        std::cout << "Error!" << std::endl;
+    }
     float r;
     /* Technically unsafe; should check if points.size() > size_t(-1)/3 */
     size_t num = points.size();
-    if(num == 0) {
+    if(num <= 1) {
         View::SetCurrent(*(cs354::draw));
         return;
     }
@@ -257,8 +277,8 @@ void DisplayView::process(std::vector<Point3f> &points) {
     
     r = points[0].x;
     newpoints[0] = Point3f(points[0]);
-    newpoints[num] = Point3f(r * SIN_120, points[0].y, r * COS_120);
-    newpoints[num*2] = Point3f(r * -SIN_120, points[0].y, r * COS_120);
+    newpoints[num] = Point3f(r * -SIN_120, points[0].y, r * COS_120);
+    newpoints[num*2] = Point3f(r * -SIN_120, points[0].y, r * -COS_120);
     /* Compute the new points, then the new quads (split into triangles), then
      * the new face normals. Per point normals can be computed if desired from
      * the face normals. */
@@ -266,8 +286,8 @@ void DisplayView::process(std::vector<Point3f> &points) {
         r = points[i].x;
         /* New points */
         newpoints[i] = Point3f(points[i]);
-        newpoints[num + i] = Point3f(r * SIN_120, points[i].y, r * COS_120);
-        newpoints[num*2 + i] = Point3f(r * -SIN_120, points[i].y, r * COS_120);
+        newpoints[num+i] = Point3f(r * -SIN_120, points[i].y, r * COS_120);
+        newpoints[num*2+i] = Point3f(r * -SIN_120, points[i].y, r * -COS_120);
         /* Element insertion; 6 triangles, 18 elements */
         p[0] = i - 1;
         p[1] = i;
@@ -322,6 +342,13 @@ void DisplayView::process(std::vector<Point3f> &points) {
         normals.push_back(norm);
         normals.push_back(norm);
     }
+    
+    for(size_t i = 0; i < npoints; ++i) {
+        std::cout << "Point " << i << " = " << newpoints[i] << std::endl;
+    }
+    for(size_t i = 0; i < elements.size(); ++i) {
+        std::cout << "Element " << i << " = " << elements[i] << std::endl;
+    }
 }
 
 void DisplayView::display_points() {
@@ -356,7 +383,34 @@ void DisplayView::display_wire() {
     }glEnd();
 }
 void DisplayView::display_gouraud() {
-    std::cout << "Display: Gouraud not implemented" << std::endl;
+    glBegin(GL_QUADS); {
+        glColor3f(1.0, 0, 0);
+        glVertex3f(100, 100, 0);
+        glColor3f(0.0, 1.0, 0);
+        glVertex3f(100, -100, 0);
+        glColor3f(0.0, 0.0, 1.0);
+        glVertex3f(-100, -100, 0);
+        glColor3f(0.0, 0.0, 0.0);
+        glVertex3f(-100, 100, 0);
+    } glEnd();
+    
+    
+    /*
+    std::cout << "Displaying Gouraud" << std::endl;
+    size_t nelements = elements.size() / 3;
+    Point3f &p1 = dummy, &p2 = dummy, &p3 = dummy;
+    glBegin(GL_TRIANGLES); {
+        for(size_t i = 0; i < nelements; i += 1) {
+            p1 = points[elements[i*3]];
+            p2 = points[elements[i*3 + 1]];
+            p3 = points[elements[i*3 + 2]];
+            glNormal3f(normals[i].x, normals[i].y, normals[i].z);
+            glVertex3f(p1.x, p1.y, p1.z);
+            glVertex3f(p2.x, p2.y, p2.z);
+            glVertex3f(p3.x, p3.y, p3.z);
+        }
+    }glEnd();
+    */
 }
 void DisplayView::display_phong() {
     std::cout << "Display: Phong not implemented" << std::endl;

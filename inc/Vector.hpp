@@ -14,7 +14,9 @@ namespace cs354 {
         
         Vector() { }
         Vector(T x, T y, T z) : x(x), y(y), z(z) { }
-        Vector(const T data[3]) : x(data[0]), y(data[1]), z(data[2]) { }
+        Vector(const T data[3]) :
+            x((T)data[0]), y((T)data[1]), z((T)data[2])
+        { }
         Vector(const Vector<T> &source) :
             x(source.x), y(source.y), z(source.z)
         { }

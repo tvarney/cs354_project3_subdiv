@@ -31,7 +31,7 @@ namespace cs354 {
     
     template <typename T>
     std::ostream & operator<<(std::ostream &out, Point<T> &rhs) {
-        out << "(" << rhs.c.x << ", " << rhs.c.y << ", " << rhs.c.z << ")";
+        out << "(" << rhs.x << ", " << rhs.y << ", " << rhs.z << ")";
         return out;
     }
 }
