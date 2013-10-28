@@ -187,7 +187,7 @@ namespace cs354 {
             return Matrix<T>();
         }
         Matrix<T> translate(Vector<T> vec) {
-            return translate(vec.c.x, vec.c.y, vec.c.z);
+            return translate(vec.x, vec.y, vec.z);
         }
         Matrix<T> rotate(T angle, Axis axis) {
             T cos = std::cos(angle);
@@ -236,7 +236,7 @@ namespace cs354 {
             return mat * (*this);
         }
         Matrix<T> rotate(T angle, Vector3f line) {
-            return rotate(angle, line.c.x, line.c.y, line.c.z);
+            return rotate(angle, line.x, line.y, line.z);
         }
         Matrix<T> scale(T x, T y, T z) {
             return (*this) * Matrix<T>::Matrix3D(x,0,0,0,0,y,0,0,0,0,z,0,
@@ -293,10 +293,10 @@ namespace cs354 {
             up = (side * forward);
             forward = -forward;
             Matrix<T> mat =
-                Matrix<T>::Matrix3D(side.c.x,    side.c.y,    side.c.z,    0,
-                                    up.c.x,      up.c.y,      up.c.z,      0,
-                                    forward.c.x, forward.c.y, forward.c.z, 0,
-                                    0,           0,           0,           1
+                Matrix<T>::Matrix3D(side.x,    side.y,    side.z,    0,
+                                    up.x,      up.y,      up.z,      0,
+                                    forward.x, forward.y, forward.z, 0,
+                                    0,         0,         0,         1
                                     );
             return mat.translate(-eye);
         }

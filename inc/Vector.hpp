@@ -10,80 +10,87 @@
 namespace cs354 {
     template <typename T>
     struct Vector {
-        union {
-            Triple<T> c;
-            T data[3];
-        };
+        T x, y, z;
         
         Vector() { }
-        Vector(T x, T y, T z) :
-            c(x, y, z)
-        { }
-        Vector(const T data[3]) :
-            c(data[0], data[1], data[2])
-        { }
+        Vector(T x, T y, T z) : x(x), y(y), z(z) { }
+        Vector(const T data[3]) : x(data[0]), y(data[1]), z(data[2]) { }
         Vector(const Vector<T> &source) :
-            c(source.data[0], source.data[1], source.data[2])
+            x(source.x), y(source.y), z(source.z)
         { }
         ~Vector() { }
         
+        T & operator[](unsigned int i) {
+            switch(i) {
+            case 0:
+                return x;
+            case 1:
+                return y;
+            case 2:
+                return z;
+            }
+        }
+        const T & operator[](unsigned int i) const {
+            switch(i) {
+            case 0:
+                return x;
+            case 1:
+                return y;
+            case 2:
+                return z;
+            }
+        }
         Vector<T> operator+() const {
             return Vector<T>(*this);
         }
         Vector<T> operator-() const {
-            return Vector<T>(-data[0], -data[1], -data[2]);
+            return Vector<T>(-x, -y, -z);
         }
         Vector<T> operator+(const Vector &rhs) const {
-            return Vector<T>(data[0] + rhs.data[0], data[1] + rhs.data[1],
-                             data[2] + rhs.data[2]);
+            return Vector<T>(x + rhs.x, y + rhs.y, z + rhs.z);
         }
         Vector<T> operator-(const Vector &rhs) const {
-            return Vector<T>(data[0] - rhs.data[0], data[1] - rhs.data[1],
-                             data[2] + rhs.data[2]);
+            return Vector<T>(x - rhs.x, y - rhs.y, z + rhs.z);
         }
         Vector<T> operator*(const Vector &rhs) const {
-            return Vector<T>(data[1] * rhs.data[2] - data[2] * rhs.data[1],
-                             data[0] * rhs.data[2] - data[2] * rhs.data[0],
-                             data[0] * rhs.data[1] - data[1] * rhs.data[0]);
+            return Vector<T>(y * rhs.z - z * rhs.y, x * rhs.z - z * rhs.x,
+                             x * rhs.y - y * rhs.x);
         }
         Vector<T> operator/(const Vector &rhs) const {
-            return Vector<T>(data[1] / rhs.data[2] - data[2] / rhs.data[1],
-                             data[0] / rhs.data[2] - data[2] / rhs.data[0],
-                             data[0] / rhs.data[1] - data[1] / rhs.data[0]);
+            return Vector<T>(y / rhs.z - z / rhs.y, x / rhs.z - z / rhs.x,
+                             x / rhs.y - y / rhs.x);
         }
         Vector<T> operator*(T scalar) const {
-            return Vector<T>(data[0]*scalar, data[1]*scalar, data[2]*scalar);
+            return Vector<T>(x*scalar, y*scalar, z*scalar);
         }
         Vector<T> operator/(T scalar) const {
-            return Vector<T>(data[0]/scalar, data[1]/scalar, data[2]/scalar);
+            return Vector<T>(x/scalar, y/scalar, z/scalar);
         }
         
         Vector<T> inverse() const {
-            return Vector<T>(((T)1.0)/data[0], ((T)1.0)/data[1],
-                             ((T)1.0)/data[2]);
+            return Vector<T>(((T)1.0)/x, ((T)1.0)/y, ((T)1.0)/z);
         }
         Vector<T> normalize() const {
             return *this / magnitude();
         }
         Vector<T> shuffle(int xs, int ys, int zs) const {
-            return Vector<T>(data[xs], data[ys], data[zs]);
+            return Vector<T>((*this)[xs], (*this)[ys], (*this)[zs]);
         }
         
         T dot(const Vector &rhs) const {
-            return data[0]*rhs.data[0] + data[1]*rhs.data[1] +
-                data[2]*rhs.data[2];
+            return x*rhs.x + y*rhs.y + z*rhs.z;
         }
         T magsquared() const {
-            return data[0]*data[0] + data[1]*data[1] + data[2]*data[2];
+            return x*x + y*y + z*z;
         }
         T magnitude() const {
             return std::sqrt(magsquared());
         }
         
         Vector<T> & operator=(const Vector<T> &rhs) {
-            data[0] = rhs.data[0];
-            data[1] = rhs.data[1];
-            data[2] = rhs.data[2];
+            x = rhs.x;
+            y = rhs.y;
+            z = rhs.z;
             return *this;
         }
         Vector<T> & operator+=(const Vector<T> &rhs) {
@@ -111,8 +118,8 @@ namespace cs354 {
     
     template <typename T>
     std::ostream & operator<<(std::ostream &out, const Vector<T> &vec) {
-        out << "<" << vec.data[0] << ", " << vec.data[1] << ", " <<
-            vec.data[2] << ">";
+        out << "<" << vec.x << ", " << vec.y << ", " <<
+            vec.z << ">";
         return out;
     }
 }
