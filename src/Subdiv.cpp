@@ -1,4 +1,5 @@
 
+#define CS354_GENERIC_IMPL
 #include "Subdiv.hpp"
 
 #include <cmath>
@@ -170,6 +171,11 @@ Point3f DrawView::calcMousePos() {
 #define DISPLAY_MODE_GOURAUD 2
 #define DISPLAY_MODE_PHONG 3
 
+static double _fov = 45.0;
+static double _scale = 0.05;
+static double _dist = 51.0;
+static double _xt = 0.0;
+
 DisplayView::DisplayView() :
     scale(1.0f), rotation_y(0.0f), rotation_z(0.0f), vertical(0),
     horizontal(0), display_mode(DISPLAY_MODE_GOURAUD), npoints(0),
@@ -190,13 +196,17 @@ void DisplayView::display() {
     
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45, win.aspect_ratio, 1.0, 101.0);
+    gluPerspective(_fov, win.aspect_ratio, 1.0, 100.0);
+    
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(0, 0, 0,
-              0, 0, 15.0,
+    gluLookAt(0, 0, _dist,
+              0, 0, 0,
               0, 1, 0);
+    glTranslatef(_xt, 0.0, 0.0);
+    glScalef(_scale, _scale, _scale);
     
+    glColor3f(1, 1, 1);
     switch(display_mode) {
     case DISPLAY_MODE_POINTS:
         display_points();
@@ -253,8 +263,59 @@ void DisplayView::keyPressed(int ch) {
     case 'q':
         std::exit(0);
         break;
-    default:
+    case 'd':
+        display_mode = (display_mode + 1) % 4;
+        View::PostRedisplay();
+        break;
+    case 'D':
+        display_mode = (display_mode == 0 ? 3 : (display_mode - 1));
+        View::PostRedisplay();
+        break;
+    case 'v':
+        _fov -= 1.0;
+        std::cout << "FOV: " << _fov << std::endl;
+        View::PostRedisplay();
+        break;
+    case 'V':
+        _fov += 1.0;
+        std::cout << "FOV " << _fov << std::endl;
+        View::PostRedisplay();
+        break;
+    case '+':
+        _scale *= 1.1;
+        std::cout << "Scale: " << _scale << std::endl;
+        View::PostRedisplay();
+        break;
+    case '=':
+        _scale /= 1.1;
+        std::cout << "Scale: " << _scale << std::endl;
+        View::PostRedisplay();
+        break;
+    case KEY_UP:
+        _dist -= 1.0;
+        std::cout << "Dist: " << _dist << std::endl;
+        View::PostRedisplay();
+        break;
+    case KEY_DOWN:
+        _dist += 1.0;
+        std::cout << "Dist: " << _dist << std::endl;
+        View::PostRedisplay();
+        break;
+    case KEY_LEFT:
+        _xt -= 1.0;
+        std::cout << "Xt: " << _xt << std::endl;
+        View::PostRedisplay();
+        break;
+    case KEY_RIGHT:
+        _xt += 1.0;
+        std::cout << "Xt: " << _xt << std::endl;
+        View::PostRedisplay();
+        break;
+        
+    case 'r':
+    case 'R':
         View::SetCurrent(*(cs354::draw));
+    default:
         return;
     }
 }
@@ -357,12 +418,14 @@ void DisplayView::process(std::vector<Point3f> &points) {
         normals.push_back(norm);
     }
     
+    /*
     for(size_t i = 0; i < npoints; ++i) {
         std::cout << "Point " << i << " = " << newpoints[i] << std::endl;
     }
     for(size_t i = 0; i < elements.size(); ++i) {
         std::cout << "Element " << i << " = " << elements[i] << std::endl;
     }
+    */
 }
 
 void DisplayView::display_points() {
@@ -381,35 +444,35 @@ void DisplayView::display_wire() {
     
     size_t nelements = elements.size();
     std::cout << "  Displaying " << nelements / 3 << " triangles" << std::endl;
-    Point3f &p1 = dummy, &p2 = dummy, &p3 = dummy;
+    Point3f *p1, *p2, *p3;
     glBegin(GL_LINES); {
         for(size_t i = 0; i < nelements; i += 3) {
-            p1 = points[elements[i]];
-            p2 = points[elements[i + 1]];
-            p3 = points[elements[i + 2]];
-            glVertex3f(p1.x, p1.y, p1.z);
-            glVertex3f(p2.x, p2.y, p2.z);
-            glVertex3f(p2.x, p2.y, p2.z);
-            glVertex3f(p3.x, p3.y, p3.z);
-            glVertex3f(p3.x, p3.y, p3.z);
-            glVertex3f(p1.x, p1.y, p1.z);
+            p1 = &points[elements[i]];
+            p2 = &points[elements[i + 1]];
+            p3 = &points[elements[i + 2]];
+            glVertex3f(p1->x, p1->y, p1->z);
+            glVertex3f(p2->x, p2->y, p2->z);
+            glVertex3f(p2->x, p2->y, p2->z);
+            glVertex3f(p3->x, p3->y, p3->z);
+            glVertex3f(p3->x, p3->y, p3->z);
+            glVertex3f(p1->x, p1->y, p1->z);
         }
     }glEnd();
 }
 void DisplayView::display_gouraud() {
     std::cout << "Displaying Gouraud" << std::endl;
+    
     size_t nelements = elements.size() / 3;
-    Point3f &p1 = dummy, &p2 = dummy, &p3 = dummy;
-    glColor3f(1.0, 1.0, 1.0);
+    Point3f *p1, *p2, *p3;
     glBegin(GL_TRIANGLES); {
         for(size_t i = 0; i < nelements; i += 1) {
-            p1 = points[elements[i*3]];
-            p2 = points[elements[i*3 + 1]];
-            p3 = points[elements[i*3 + 2]];
+            p1 = &points[elements[i*3]];
+            p2 = &points[elements[i*3 + 1]];
+            p3 = &points[elements[i*3 + 2]];
             glNormal3f(normals[i].x, normals[i].y, normals[i].z);
-            glVertex3f(p1.x, p1.y, p1.z);
-            glVertex3f(p2.x, p2.y, p2.z);
-            glVertex3f(p3.x, p3.y, p3.z);
+            glVertex3f(p1->x, p1->y, p1->z);
+            glVertex3f(p2->x, p2->y, p2->z);
+            glVertex3f(p3->x, p3->y, p3->z);
         }
     }glEnd();
 }
