@@ -49,6 +49,8 @@ namespace cs354 {
         unsigned int vertical, horizontal;
         int display_mode;
         
+        float lightpos[3];
+        
         size_t npoints;
         Point3f *points;
         std::vector<unsigned int> elements;

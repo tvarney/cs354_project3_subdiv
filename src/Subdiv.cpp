@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <iostream>
 #include "Geometry.hpp"
+#include "Material.hpp"
 
 using namespace cs354;
 
@@ -171,11 +172,10 @@ Point3f DrawView::calcMousePos() {
 #define DISPLAY_MODE_GOURAUD 2
 #define DISPLAY_MODE_PHONG 3
 
-static double _scale = 0.1;
 static double _dist = 51.0;
 
 DisplayView::DisplayView() :
-    scale(1.0f), rotation_y(0.0f), rotation_z(0.0f), vertical(0),
+    scale(0.1f), rotation_y(0.0f), rotation_z(0.0f), vertical(0),
     horizontal(0), display_mode(DISPLAY_MODE_GOURAUD), npoints(0),
     points(NULL), elements(), display_list(0)
 { }
@@ -201,7 +201,7 @@ void DisplayView::display() {
     gluLookAt(0, 0, _dist,
               0, 0, 0,
               0, -1, 0);
-    glScalef(_scale, _scale, _scale);
+    glScalef(scale, scale, scale);
     
     glColor3f(1, 1, 1);
     switch(display_mode) {
@@ -227,12 +227,15 @@ void DisplayView::display() {
 }
 void DisplayView::init() {
     /* Set the default display parameters */
-    scale = 1.0f;
+    scale = 0.1f;
     rotation_y = 0.0f;
     rotation_z = 0.0f;
     vertical = 0;
     horizontal = 0;
     display_mode = DISPLAY_MODE_GOURAUD;
+    lightpos[0] = 50.0;
+    lightpos[1] = 15.0;
+    lightpos[2] = 50.0;
 }
 void DisplayView::end() {
     if(display_list != 0) {
@@ -269,13 +272,11 @@ void DisplayView::keyPressed(int ch) {
         View::PostRedisplay();
         break;
     case '+':
-        _scale *= 1.1;
-        std::cout << "Scale: " << _scale << std::endl;
+        scale *= 1.1;
         View::PostRedisplay();
         break;
     case '=':
-        _scale /= 1.1;
-        std::cout << "Scale: " << _scale << std::endl;
+        scale /= 1.1;
         View::PostRedisplay();
         break;
     case KEY_UP:
@@ -405,7 +406,6 @@ void DisplayView::process(std::vector<Point3f> &points) {
 }
 
 void DisplayView::display_points() {
-    std::cout << "Displaying Points" << std::endl;
     size_t npoints = this->npoints;
     glBegin(GL_POINTS); {
         for(size_t i = 0; i < npoints; ++i) {
@@ -416,10 +416,7 @@ void DisplayView::display_points() {
 /* This function has a LOT of overdraw -. - */
 static Point3f dummy;
 void DisplayView::display_wire() {
-    std::cout << "Displaying Wireframe" << std::endl;
-    
     size_t nelements = elements.size();
-    std::cout << "  Displaying " << nelements / 3 << " triangles" << std::endl;
     Point3f *p1, *p2, *p3;
     glBegin(GL_LINES); {
         for(size_t i = 0; i < nelements; i += 3) {
@@ -435,8 +432,20 @@ void DisplayView::display_wire() {
         }
     }glEnd();
 }
+
+static float _light_a[4] = {1.0, 1.0, 1.0, 1.0};
+static float _light_d[4] = {1.0, 1.0, 1.0, 1.0};
+static float _light_s[4] = {1.0, 1.0, 1.0, 1.0};
+
 void DisplayView::display_gouraud() {
-    std::cout << "Displaying Gouraud" << std::endl;
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    
+    glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, _light_a);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, _light_d);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, _light_s);
+    Material::Silver.use();
     
     size_t nelements = elements.size() / 3;
     Point3f *p1, *p2, *p3;
@@ -451,6 +460,9 @@ void DisplayView::display_gouraud() {
             glVertex3f(p3->x, p3->y, p3->z);
         }
     }glEnd();
+    
+    glDisable(GL_LIGHT0);
+    glDisable(GL_LIGHTING);
 }
 void DisplayView::display_phong() {
     std::cout << "Display: Phong not implemented" << std::endl;
