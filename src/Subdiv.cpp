@@ -171,10 +171,8 @@ Point3f DrawView::calcMousePos() {
 #define DISPLAY_MODE_GOURAUD 2
 #define DISPLAY_MODE_PHONG 3
 
-static double _fov = 45.0;
-static double _scale = 0.05;
+static double _scale = 0.1;
 static double _dist = 51.0;
-static double _xt = 0.0;
 
 DisplayView::DisplayView() :
     scale(1.0f), rotation_y(0.0f), rotation_z(0.0f), vertical(0),
@@ -196,14 +194,13 @@ void DisplayView::display() {
     
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(_fov, win.aspect_ratio, 1.0, 100.0);
+    gluPerspective(45.0, win.aspect_ratio, 1.0, 100.0);
     
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     gluLookAt(0, 0, _dist,
               0, 0, 0,
-              0, 1, 0);
-    glTranslatef(_xt, 0.0, 0.0);
+              0, -1, 0);
     glScalef(_scale, _scale, _scale);
     
     glColor3f(1, 1, 1);
@@ -271,16 +268,6 @@ void DisplayView::keyPressed(int ch) {
         display_mode = (display_mode == 0 ? 3 : (display_mode - 1));
         View::PostRedisplay();
         break;
-    case 'v':
-        _fov -= 1.0;
-        std::cout << "FOV: " << _fov << std::endl;
-        View::PostRedisplay();
-        break;
-    case 'V':
-        _fov += 1.0;
-        std::cout << "FOV " << _fov << std::endl;
-        View::PostRedisplay();
-        break;
     case '+':
         _scale *= 1.1;
         std::cout << "Scale: " << _scale << std::endl;
@@ -301,17 +288,6 @@ void DisplayView::keyPressed(int ch) {
         std::cout << "Dist: " << _dist << std::endl;
         View::PostRedisplay();
         break;
-    case KEY_LEFT:
-        _xt -= 1.0;
-        std::cout << "Xt: " << _xt << std::endl;
-        View::PostRedisplay();
-        break;
-    case KEY_RIGHT:
-        _xt += 1.0;
-        std::cout << "Xt: " << _xt << std::endl;
-        View::PostRedisplay();
-        break;
-        
     case 'r':
     case 'R':
         View::SetCurrent(*(cs354::draw));
