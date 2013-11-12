@@ -20,6 +20,8 @@ DrawView::~DrawView() {
 }
 
 void DrawView::display() {
+    glDisable(GL_LIGHTING);
+    
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
@@ -291,6 +293,17 @@ void DisplayView::keyPressed(int ch) {
         std::cout << "Using material " << matid << std::endl;
         View::PostRedisplay();
         break;
+    case 'h':
+    case 'H':
+        if(display_list != 0) {
+            glDeleteLists(display_list, 1);
+            display_list = 0;
+        }
+        std::cout << "Subdividing horizontally...";
+        subdivide_horiz();
+        std::cout << "done (new ring-size: " << horizontal << ")" << std::endl;
+        View::PostRedisplay();
+        break;
     case '+':
         scale *= 1.1;
         View::PostRedisplay();
@@ -410,7 +423,7 @@ static float _light_a[4] = {1.0, 1.0, 1.0, 1.0};
 static float _light_d[4] = {1.0, 1.0, 1.0, 1.0};
 static float _light_s[4] = {1.0, 1.0, 1.0, 1.0};
 
-#define glNormal(norm) glNormal3f((norm).getX(), (norm).getY(), (norm).getZ())
+#define glNormal(norm) glNormal3f((norm).x, (norm).y, (norm).z)
 void DisplayView::display_gouraud() {
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
@@ -507,17 +520,65 @@ void DisplayView::update_model() {
     /* Normalize the normals (heh) */
     for(uint32_t i = 0; i < npoints; ++i) {
         normals[i] = normals[i].normalize();
-        
-        std::cout << "Point " << i << " : " << points[i] << "; Normal : " <<
-            normals[i] << std::endl;
     }
 }
 
+static inline Point3f _average_point(Point3f p1, Point3f p2) {
+    Point3f rval = p1 * 4.0f;
+    rval.x += p2.x * 4.0f;
+    rval.y += p2.y * 4.0f;
+    rval.z += p2.z * 4.0f;
+    return rval * 0.125f;
+}
+static inline Point3f _average_point(Point3f p1, Point3f p2, Point3f p3) {
+    Point3f rval = p2 * 6.0f;
+    rval.x += p1.x + p3.x;
+    rval.y += p1.y + p3.y;
+    rval.z += p1.z + p3.z;
+    return rval * 0.125f;
+}
 /* Remember to delete the display list after updating the model. */
 void DisplayView::subdivide_horiz() {
+    size_t nhoriz = horizontal * 2;
+    size_t newsize = nhoriz * vertical;
+    
+    Point3f *newpoints = new Point3f[newsize];
+    
+    /* v is used as a slice base index */
+    size_t v, pos = 0;
+    for(size_t i = 0; i < vertical; ++i) {
+        v = i * horizontal;
+        /* Update initial point */
+        newpoints[pos] = _average_point(points[v + horizontal - 1], points[v],
+                                        points[v + 1]);
+        newpoints[pos + 1] = _average_point(points[v], points[v + 1]);
+        /* Update using the middle points */
+        for(size_t h = 1; h < horizontal - 1; ++h) {
+            newpoints[pos + h*2] = _average_point(points[v+h-1], points[v+h],
+                                                  points[v+h+1]);
+            newpoints[pos + h*2 + 1] = _average_point(points[v+h],
+                                                      points[v+h+1]);
+        }
+        /* Update end point */
+        newpoints[pos + nhoriz - 2] = _average_point(points[v+horizontal-2],
+                                                     points[v+horizontal-1],
+                                                     points[v]);
+        newpoints[pos + nhoriz - 1] = _average_point(points[v+horizontal-1],
+                                                     points[v]);
+        
+        pos += nhoriz;
+    }
+    
+    DELETE(points);
+    points = newpoints;
+    horizontal = nhoriz;
+    npoints = newsize;
+    
     update_model();
 }
 void DisplayView::subdivide_vertical() {
+    //size_t nvert = vertical * 2 - 1;
+    //size_t newsize = horizontal * nvert;
     
-    update_model();
+    //update_model();
 }

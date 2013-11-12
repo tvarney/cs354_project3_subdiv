@@ -18,14 +18,14 @@ namespace cs354 {
         { }
         ~Point() { }
         
-        T & getX() {
-            return x;
+        Point<T> & operator=(const Point<T> rhs) {
+            x = rhs.x;
+            y = rhs.y;
+            z = rhs.z;
+            return *this;
         }
-        T & getY() {
-            return y;
-        }
-        T & getZ() {
-            return z;
+        Point<T> operator/(T scalar) {
+            return Point<T>(x / scalar, y / scalar, z / scalar);
         }
         
         static const Point<T> Origin;
@@ -38,6 +38,15 @@ namespace cs354 {
     typedef Point<double> Point3d;
     typedef Point<int> Point3i;
     typedef Point<unsigned int> Point3ui;
+    
+    template <typename T>
+    Point<T> operator*(const Point<T> lhs, T scalar) {
+        return Point<T>(lhs.x * scalar, lhs.y * scalar, lhs.z * scalar);
+    }
+    template <typename T>
+    Point<T> operator*(T scalar, const Point<T> rhs) {
+        return Point<T>(rhs.x * scalar, rhs.y * scalar, rhs.z * scalar);
+    }
     
     template <typename T>
     std::ostream & operator<<(std::ostream &out, Point<T> &rhs) {
