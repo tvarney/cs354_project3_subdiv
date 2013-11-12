@@ -3,6 +3,7 @@
 #define CS354_PROJECT3_SUBDIV_HPP
 
 #include <vector>
+#include "Material.hpp"
 #include "Point.hpp"
 #include "Vector.hpp"
 #include "View.hpp"
@@ -45,16 +46,24 @@ namespace cs354 {
         void display_gouraud();
         void display_phong();
         
+        void create_face(uint32_t p1, uint32_t p2, uint32_t p3);
+        void update_model();
+        
+        void subdivide_horiz();
+        void subdivide_vertical();
+        
         float scale, rotation_y, rotation_z;
         unsigned int vertical, horizontal;
         int display_mode;
         
-        float lightpos[3];
+        float lightpos[4];
         
         size_t npoints;
         Point3f *points;
-        std::vector<unsigned int> elements;
-        std::vector<Vector3f> normals;
+        Vector3f *normals;
+        std::vector<uint32_t> elements;
+        uint32_t matid;
+        std::vector<const Material *> mats;
         unsigned int display_list;
     };
     

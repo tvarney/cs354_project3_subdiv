@@ -10,9 +10,11 @@
 
 using namespace cs354;
 
+#define DELETE(ptr) do { if((ptr) != NULL) { delete[] ptr; ptr = NULL; } }while(0)
+
 BasicView *cs354::draw = NULL, *cs354::display = NULL;
 
-DrawView::DrawView() : mouse_mode(false) { }
+DrawView::DrawView() : mouse_mode(false), snap_mode(true) { }
 DrawView::~DrawView() {
     points.clear();
 }
@@ -177,8 +179,13 @@ static double _dist = 51.0;
 DisplayView::DisplayView() :
     scale(0.1f), rotation_y(0.0f), rotation_z(0.0f), vertical(0),
     horizontal(0), display_mode(DISPLAY_MODE_GOURAUD), npoints(0),
-    points(NULL), elements(), display_list(0)
-{ }
+    points(NULL), normals(NULL), elements(), matid(0), display_list(0)
+{
+    mats.push_back(&(Material::Bronze));
+    mats.push_back(&(Material::Silver));
+    mats.push_back(&(Material::Gold));
+    mats.push_back(&(Material::Plastic));
+}
 DisplayView::~DisplayView() {
     end();
 }
@@ -201,9 +208,9 @@ void DisplayView::display() {
     gluLookAt(0, 0, _dist,
               0, 0, 0,
               0, -1, 0);
-    glScalef(scale, scale, scale);
     
     glColor3f(1, 1, 1);
+    
     switch(display_mode) {
     case DISPLAY_MODE_POINTS:
         display_points();
@@ -233,22 +240,21 @@ void DisplayView::init() {
     vertical = 0;
     horizontal = 0;
     display_mode = DISPLAY_MODE_GOURAUD;
-    lightpos[0] = 50.0;
-    lightpos[1] = 15.0;
-    lightpos[2] = 50.0;
+    lightpos[0] = 1.0f;
+    lightpos[1] = -0.5f;
+    lightpos[2] = 1.0f;
+    lightpos[3] = 0.0f;
+    matid = 0;
 }
 void DisplayView::end() {
     if(display_list != 0) {
         /*TODO: delete the display list */
+        glDeleteLists(display_list, 1);
         display_list = 0;
     }
-    
-    if(points != NULL) {
-        delete [] points;
-        elements.clear();
-        normals.clear();
-        points = NULL;
-    }
+    DELETE(points);
+    DELETE(normals);
+    elements.clear();
 }
 
 void DisplayView::keyPressed(int ch) {
@@ -265,10 +271,24 @@ void DisplayView::keyPressed(int ch) {
         break;
     case 'd':
         display_mode = (display_mode + 1) % 4;
+        if(display_list != 0) {
+            glDeleteLists(display_list, 1);
+            display_list = 0;
+        }
         View::PostRedisplay();
         break;
     case 'D':
         display_mode = (display_mode == 0 ? 3 : (display_mode - 1));
+        if(display_list != 0) {
+            glDeleteLists(display_list, 1);
+            display_list = 0;
+        }
+        View::PostRedisplay();
+        break;
+    case 'm':
+    case 'M':
+        matid = (matid + 1) % mats.size();
+        std::cout << "Using material " << matid << std::endl;
         View::PostRedisplay();
         break;
     case '+':
@@ -277,6 +297,22 @@ void DisplayView::keyPressed(int ch) {
         break;
     case '=':
         scale /= 1.1;
+        View::PostRedisplay();
+        break;
+    case '/':
+        rotation_y += 1.0f;
+        View::PostRedisplay();
+        break;
+    case '?':
+        rotation_y -= 1.0f;
+        View::PostRedisplay();
+        break;
+    case '.':
+        rotation_z += 1.0f;
+        View::PostRedisplay();
+        break;
+    case '>':
+        rotation_z -= 1.0f;
         View::PostRedisplay();
         break;
     case KEY_UP:
@@ -305,107 +341,41 @@ void DisplayView::keyPressed(int ch) {
  * to do a full Matrix Multiply for a simple rotation that is known ahead of
  * time.
  */
-#define COS_120 -0.5
-#define SIN_120 0.8660254037844387
-
-void DisplayView::process(std::vector<Point3f> &points) {
-    init();
-    if(this->points != NULL) {
-        std::cout << "Error!" << std::endl;
-    }
-    float r;
+void DisplayView::process(std::vector<Point3f> &controls) {
     /* Technically unsafe; should check if points.size() > size_t(-1)/3 */
-    size_t num = points.size();
+    size_t num = controls.size();
     if(num <= 1) {
         View::SetCurrent(*(cs354::draw));
         return;
     }
     
+    DELETE(points);
+    
+    /* Get the total number of points in the final model. This is an
+     * overestimate, as points that lie on the axis are not actually
+     * multiplied, but to keep indexing easy they need to exist in the array.
+     */
+    vertical = num;
+    horizontal = 3;
     npoints = num * 3;
-    Point3f *newpoints = new Point3f[npoints];
-    this->points = newpoints;
-    unsigned int p[6];
-    Vector3f vec1, vec2, norm;
-    
-    r = points[0].x;
-    newpoints[0] = Point3f(points[0]);
-    newpoints[num] = Point3f(r * -SIN_120, points[0].y, r * COS_120);
-    newpoints[num*2] = Point3f(r * -SIN_120, points[0].y, r * -COS_120);
-    /* Compute the new points, then the new quads (split into triangles), then
-     * the new face normals. Per point normals can be computed if desired from
-     * the face normals. */
-    for(size_t i = 1; i < num; ++i) {
-        r = points[i].x;
-        /* New points */
-        newpoints[i] = Point3f(points[i]);
-        newpoints[num+i] = Point3f(r * -SIN_120, points[i].y, r * COS_120);
-        newpoints[num*2+i] = Point3f(r * -SIN_120, points[i].y, r * -COS_120);
-        /* Element insertion; 6 triangles, 18 elements */
-        p[0] = i - 1;
-        p[1] = i;
-        p[2] = num + i - 1;
-        p[3] = num + i;
-        p[4] = 2 * num + i - 1;
-        p[5] = 2 * num + i;
-        
-        elements.push_back(p[0]);
-        elements.push_back(p[3]);
-        elements.push_back(p[1]);
-        
-        elements.push_back(p[0]);
-        elements.push_back(p[2]);
-        elements.push_back(p[3]);
-        
-        elements.push_back(p[2]);
-        elements.push_back(p[5]);
-        elements.push_back(p[3]);
-        
-        elements.push_back(p[2]);
-        elements.push_back(p[4]);
-        elements.push_back(p[5]);
-        
-        elements.push_back(p[4]);
-        elements.push_back(p[0]);
-        elements.push_back(p[1]);
-        
-        elements.push_back(p[4]);
-        elements.push_back(p[1]);
-        elements.push_back(p[5]);
-        
-        /* Face Normal calculations:
-         * The computed normals are pushed twice since there are two triangles
-         * in each quad.
-         */
-        vec1 = (newpoints[p[3]] - newpoints[p[0]]);
-        vec2 = (newpoints[p[1]] - newpoints[p[0]]);
-        norm = (vec1 * vec2).normalize();
-        normals.push_back(norm);
-        normals.push_back(norm);
-        
-        vec1 = (newpoints[p[5]] - newpoints[p[2]]);
-        vec2 = (newpoints[p[3]] - newpoints[p[2]]);
-        norm = (vec1 * vec2).normalize();
-        normals.push_back(norm);
-        normals.push_back(norm);
-        
-        vec1 = (newpoints[p[0]] - newpoints[p[4]]);
-        vec2 = (newpoints[p[1]] - newpoints[p[4]]);
-        norm = (vec1 * vec2).normalize();
-        normals.push_back(norm);
-        normals.push_back(norm);
+    points = new Point3f[npoints];
+    /* Create new points */
+    Point3f p;
+    for(size_t i = 0; i < num; i++) {
+        p = controls[i];
+        points[i*3] = p;
+        points[i*3 + 1] = Point3f(p.x * -0.5, p.y, p.x * 0.8660254037844387);
+        points[i*3 + 2] = Point3f(p.x * -0.5, p.y, p.x * -0.8660254037844387);
     }
     
-    /*
-    for(size_t i = 0; i < npoints; ++i) {
-        std::cout << "Point " << i << " = " << newpoints[i] << std::endl;
-    }
-    for(size_t i = 0; i < elements.size(); ++i) {
-        std::cout << "Element " << i << " = " << elements[i] << std::endl;
-    }
-    */
+    update_model();
 }
 
 void DisplayView::display_points() {
+    glScalef(scale, scale, scale);
+    glRotatef(rotation_y, 0, 1, 0);
+    glRotatef(rotation_z, 0, 0, 1);
+    
     size_t npoints = this->npoints;
     glBegin(GL_POINTS); {
         for(size_t i = 0; i < npoints; ++i) {
@@ -414,8 +384,11 @@ void DisplayView::display_points() {
     }glEnd();
 }
 /* This function has a LOT of overdraw -. - */
-static Point3f dummy;
 void DisplayView::display_wire() {
+    glScalef(scale, scale, scale);
+    glRotatef(rotation_y, 0, 1, 0);
+    glRotatef(rotation_z, 0, 0, 1);
+    
     size_t nelements = elements.size();
     Point3f *p1, *p2, *p3;
     glBegin(GL_LINES); {
@@ -437,33 +410,114 @@ static float _light_a[4] = {1.0, 1.0, 1.0, 1.0};
 static float _light_d[4] = {1.0, 1.0, 1.0, 1.0};
 static float _light_s[4] = {1.0, 1.0, 1.0, 1.0};
 
+#define glNormal(norm) glNormal3f((norm).getX(), (norm).getY(), (norm).getZ())
 void DisplayView::display_gouraud() {
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
+    glEnable(GL_DEPTH_TEST);
     
     glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
     glLightfv(GL_LIGHT0, GL_AMBIENT, _light_a);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, _light_d);
     glLightfv(GL_LIGHT0, GL_SPECULAR, _light_s);
-    Material::Silver.use();
     
-    size_t nelements = elements.size() / 3;
+    mats[matid]->use();
+    Material::Red.use(FACE_BACK);
+    
+    glScalef(scale, scale, scale);
+    glRotatef(rotation_y, 0, 1, 0);
+    glRotatef(rotation_z, 0, 0, 1);
+    
+    if(display_list != 0) {
+        glCallList(display_list);
+        return;
+    }
+    
+    display_list = glGenLists(1);
+    glNewList(display_list, GL_COMPILE_AND_EXECUTE);
+    
+    size_t nelements = elements.size();
     Point3f *p1, *p2, *p3;
     glBegin(GL_TRIANGLES); {
-        for(size_t i = 0; i < nelements; i += 1) {
-            p1 = &points[elements[i*3]];
-            p2 = &points[elements[i*3 + 1]];
-            p3 = &points[elements[i*3 + 2]];
-            glNormal3f(normals[i].x, normals[i].y, normals[i].z);
+        for(size_t i = 0; i < nelements; i += 3) {
+            p1 = &points[elements[i]];
+            p2 = &points[elements[i + 1]];
+            p3 = &points[elements[i + 2]];
+            glNormal(normals[elements[i]]);
             glVertex3f(p1->x, p1->y, p1->z);
+            glNormal(normals[elements[i + 1]]);
             glVertex3f(p2->x, p2->y, p2->z);
+            glNormal(normals[elements[i + 2]]);
             glVertex3f(p3->x, p3->y, p3->z);
         }
     }glEnd();
+    glEndList();
     
     glDisable(GL_LIGHT0);
     glDisable(GL_LIGHTING);
 }
 void DisplayView::display_phong() {
     std::cout << "Display: Phong not implemented" << std::endl;
+}
+
+void DisplayView::create_face(uint32_t p1, uint32_t p2, uint32_t p3) {
+    elements.push_back(p1);
+    elements.push_back(p2);
+    elements.push_back(p3);
+    Vector3f normal = (points[p3] - points[p2]) * (points[p1] - points[p2]);
+    normal = normal.normalize();
+    normals[p1] += normal;
+    normals[p2] += normal;
+    normals[p3] += normal;
+}
+void DisplayView::update_model() {
+    size_t curr = 0, prev = 0;
+    bool curr_point = (points[0].x == 0.0f), prev_point = false;
+
+    
+    /* Set up the normals and elements arrays */
+    DELETE(normals);
+    elements.erase(elements.begin(), elements.end());
+    normals = new Vector3f[npoints];
+    
+    /* Zero the normals */
+    for(uint32_t i = 0; i < npoints; ++i) {
+        normals[i] = Vector3f(0.0f, 0.0f, 0.0f);
+    }
+    
+    for(uint32_t v = 1; v < vertical; ++v) {
+        prev = curr;
+        curr = prev + horizontal;
+        prev_point = curr_point;
+        curr_point = (points[curr].x == 0.0f);
+        
+        if(curr_point && prev_point) {
+            /* Don't create faces between two non-ring slices */
+            continue;
+        }
+        
+        for(uint32_t h = 0; h < horizontal - 1; ++h) {
+            create_face(prev + h, curr + h, curr + h + 1);
+            create_face(prev + h, curr + h + 1, prev + h + 1);
+        }
+        create_face(prev + horizontal - 1, curr + horizontal - 1, curr);
+        create_face(prev + horizontal - 1, curr, prev);
+    }
+    
+    /* Normalize the normals (heh) */
+    for(uint32_t i = 0; i < npoints; ++i) {
+        normals[i] = normals[i].normalize();
+        
+        std::cout << "Point " << i << " : " << points[i] << "; Normal : " <<
+            normals[i] << std::endl;
+    }
+}
+
+/* Remember to delete the display list after updating the model. */
+void DisplayView::subdivide_horiz() {
+    update_model();
+}
+void DisplayView::subdivide_vertical() {
+    
+    update_model();
 }

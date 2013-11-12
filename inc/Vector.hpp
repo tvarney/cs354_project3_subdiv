@@ -12,7 +12,7 @@ namespace cs354 {
     struct Vector {
         T x, y, z;
         
-        Vector() { }
+        Vector() : x((T)0), y((T)0), z((T)0) { }
         Vector(T x, T y, T z) : x(x), y(y), z(z) { }
         Vector(const T data[3]) :
             x((T)data[0]), y((T)data[1]), z((T)data[2])
@@ -73,7 +73,8 @@ namespace cs354 {
             return Vector<T>(((T)1.0)/x, ((T)1.0)/y, ((T)1.0)/z);
         }
         Vector<T> normalize() const {
-            return *this / magnitude();
+            T mag = magnitude();
+            return (mag != ((T)0) ? (*this / mag) : Vector<T>());
         }
         Vector<T> shuffle(int xs, int ys, int zs) const {
             return Vector<T>((*this)[xs], (*this)[ys], (*this)[zs]);
@@ -112,6 +113,16 @@ namespace cs354 {
         }
         Vector<T> & operator/=(T scalar) {
             return *this = *this / scalar;
+        }
+
+        T & getX() {
+            return x;
+        }
+        T & getY() {
+            return y;
+        }
+        T & getZ() {
+            return z;
         }
     };
     

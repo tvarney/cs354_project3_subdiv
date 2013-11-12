@@ -65,6 +65,13 @@ void Material::use() const {
     glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
     glMaterialf(GL_FRONT, GL_SHININESS, shininess);
 }
+void Material::use(Face face) const {
+    GLenum glface = (face == FACE_FRONT ? GL_FRONT : GL_BACK);
+    glMaterialfv(glface, GL_AMBIENT, ambient);
+    glMaterialfv(glface, GL_DIFFUSE, diffuse);
+    glMaterialfv(glface, GL_SPECULAR, specular);
+    glMaterialf(glface, GL_SHININESS, shininess);
+}
 
 const Material Material::Brass(Color(0.329412, 0.223529, 0.027451),
                                Color(0.780392, 0.568627, 0.113725),
@@ -98,3 +105,8 @@ const Material Material::Rubber(Color(0.05, 0.0, 0.0),
                                 Color(0.5, 0.4, 0.4),
                                 Color(0.7, 0.4, 0.4),
                                 0.078125 * 128);
+
+const Material Material::Red(Color(0.5, 0.0, 0.0),
+                             Color(0.7, 0.0, 0.0),
+                             Color(0.9, 0.0, 0.0),
+                             1.0f);

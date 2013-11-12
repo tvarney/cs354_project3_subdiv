@@ -10,13 +10,23 @@ namespace cs354 {
     struct Point {
         T x, y, z;
         
-        Point() { }
+        Point() : x((T)0), y((T)0), z((T)0) { }
         Point(T x, T y, T z) : x(x), y(y), z(z) { }
         Point(T data[3]) : x(data[0]), y(data[1]), z(data[2]) { }
         Point(const Point<T> &source) :
             x(source.x), y(source.y), z(source.z)
         { }
         ~Point() { }
+        
+        T & getX() {
+            return x;
+        }
+        T & getY() {
+            return y;
+        }
+        T & getZ() {
+            return z;
+        }
         
         static const Point<T> Origin;
     };

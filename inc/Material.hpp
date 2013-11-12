@@ -5,6 +5,11 @@
 #include "Color.hpp"
 
 namespace cs354 {
+    enum Face {
+        FACE_FRONT,
+        FACE_BACK,
+    };
+    
     struct Material {
         float ambient[4], diffuse[4], specular[4];
         float shininess;
@@ -16,9 +21,11 @@ namespace cs354 {
         ~Material();
         
         void use() const;
+        void use(Face face) const;
         
         static const Material Brass, Bronze, Chrome, Copper, Gold, Silver;
         static const Material Plastic, Rubber;
+        static const Material Red;
     };
 }
 
