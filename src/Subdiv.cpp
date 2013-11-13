@@ -194,6 +194,8 @@ DisplayView::~DisplayView() {
 
 void DisplayView::display() {
     glViewport(0,0,win.dim.width, win.dim.height);
+    glLineWidth(1.0f);
+    glPointSize(1.0f);
     
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -302,6 +304,17 @@ void DisplayView::keyPressed(int ch) {
         std::cout << "Subdividing horizontally...";
         subdivide_horiz();
         std::cout << "done (new ring-size: " << horizontal << ")" << std::endl;
+        View::PostRedisplay();
+        break;
+    case 'v':
+    case 'V':
+        if(display_list != 0) {
+            glDeleteLists(display_list, 1);
+            display_list = 0;
+        }
+        std::cout << "Subdividing vertically...";
+        subdivide_vertical();
+        std::cout << "done (new size: " << vertical << ")" << std::endl;
         View::PostRedisplay();
         break;
     case '+':
@@ -577,8 +590,48 @@ void DisplayView::subdivide_horiz() {
     update_model();
 }
 void DisplayView::subdivide_vertical() {
-    //size_t nvert = vertical * 2 - 1;
-    //size_t newsize = horizontal * nvert;
+    size_t nvert = vertical * 2 - 1;
+    size_t newsize = horizontal * nvert;
+    size_t step = horizontal * 2;
     
-    //update_model();
+    Point3f *newpoints = new Point3f[newsize];
+    
+    /* Copy first horizontal slice, calculate second */
+    for(size_t h = 0; h < horizontal; ++h) {
+        newpoints[h] = points[h];
+        newpoints[h + horizontal] =
+            _average_point(newpoints[h], points[h + horizontal],
+                           points[h + step]);
+    }
+    
+    /* Middle slices */
+    size_t oldbase, newbase;
+    for(size_t v = 1; v < vertical - 1; ++v) {
+        oldbase = v * horizontal;
+        newbase = v * step;
+        
+        for(size_t h = 0; h < horizontal; ++h) {
+            /* Even Rule */
+            newpoints[newbase + h] =
+                _average_point(points[oldbase - horizontal],
+                               points[oldbase],
+                               points[oldbase + horizontal]);
+            /* Odd Rule */
+            newpoints[newbase + h + horizontal] =
+                _average_point(points[oldbase], points[oldbase + horizontal]);
+        }
+    }
+    
+    /* Copy last horizontal slice */
+    oldbase = (vertical - 1) * horizontal;
+    newbase = (nvert - 2) * horizontal;
+    for(size_t h = 0; h < horizontal; ++h) {
+        newpoints[newbase + h + horizontal] = points[oldbase + h];
+    }
+    DELETE(points);
+    points = newpoints;
+    vertical = nvert;
+    npoints = newsize;
+    
+    update_model();
 }
