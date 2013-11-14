@@ -157,7 +157,11 @@ BasicView::BasicView() {
 BasicView::~BasicView() { }
 
 /* Stubbed functions */
-void BasicView::init() { }
+void BasicView::init() {
+    win.dim.width = glutGet(GLUT_WINDOW_WIDTH);
+    win.dim.height = glutGet(GLUT_WINDOW_HEIGHT);
+    win.aspect_ratio = double(win.dim.width) / double(win.dim.height);
+}
 void BasicView::end() { }
 void BasicView::overlay() { }
 void BasicView::reshape(int width, int height) {

@@ -49,7 +49,7 @@ void Model::display(DisplayMode mode, ShadeType type) {
     /* Check for change to the current drawing routine. If it has changed,
      * get rid of the display list.
      */
-    if(mode != lastmode || (lastmode == DISPLAY_MODEL && type != lasttype)) {
+    if(mode != lastmode || type != lasttype) {
         lastmode = mode;
         lasttype = type;
         if(display_list != 0) {
@@ -66,24 +66,21 @@ void Model::display(DisplayMode mode, ShadeType type) {
     }else {
         display_list = glGenLists(1);
         glNewList(display_list, GL_COMPILE_AND_EXECUTE);
-        switch(mode) {
-        case DISPLAY_POINTS:
-            display_points();
-            break;
-        case DISPLAY_WIRES:
-            display_wire();
-            break;
-        case DISPLAY_MODEL:
-            switch(type) {
-            case SHADE_GOURAUD:
-                display_gouraud();
-                break;
-            case SHADE_PHONG:
-                display_phong();
-                break;
-            }
-            break;
+        
+        uint32_t e1, e2, e3;
+        Point3f p1, p2, p3;
+        Vector3f n1, n2, n3;
+        uint32_t d = (type == SHADE_GOURAUD ? 0 : _depth);
+        GLenum type = (mode == DISPLAY_POINTS ? GL_POINTS :
+                       (mode == DISPLAY_WIRES ? GL_LINES : GL_TRIANGLES));
+        glBegin(type);
+        for(size_t i = 0; i < elements.size(); i += 3) {
+            e1 = elements[i]; e2 = elements[i+1]; e3 = elements[i+2];
+            p1 = points[e1];  p2 = points[e2];    p3 = points[e3];
+            n1 = normals[e1]; n2 = normals[e2];   n3 = normals[e3];
+            r_subdiv_face(d, p1, p2, p3, n1, n2, n3);
         }
+        glEnd();
         glEndList();
     }
 }
@@ -265,64 +262,27 @@ void Model::subdiv_v() {
     update();
 }
 
-void Model::display_points() {
-    glBegin(GL_POINTS); {
-        for(size_t i = 0; i < size; ++i) {
-            glVertex(points[i]);
-        }
-    }glEnd();
-}
-void Model::display_wire() {
-    Point3f p1, p2, p3;
-    glBegin(GL_LINES); {
-        for(size_t i = 0; i < elements.size(); i += 3) {
-            p1 = points[elements[i]];
-            p2 = points[elements[i+1]];
-            p3 = points[elements[i+2]];
-            glVertex(p1); glVertex(p2);
-            glVertex(p2); glVertex(p3);
-            glVertex(p3); glVertex(p1);
-        }
-    }glEnd();
-}
-void Model::display_gouraud() {
-    uint32_t e1, e2, e3;
-    glBegin(GL_TRIANGLES); {
-        for(size_t i = 0; i < elements.size(); i += 3) {
-            e1 = elements[i];
-            e2 = elements[i+1];
-            e3 = elements[i+2];
-            
-            glNormal(normals[e1]); glVertex(points[e1]);
-            glNormal(normals[e2]); glVertex(points[e2]);
-            glNormal(normals[e3]); glVertex(points[e3]);
-        }
-    }glEnd();
-}
-
-void Model::display_phong() {
-    uint32_t e1, e2, e3;
-    Point3f p1, p2, p3, pm1, pm2, pm3, pcenter;
-    Vector3f n1, n2, n3, nm1, nm2, nm3, ncenter;
-    
-    glBegin(GL_TRIANGLES); {
-        for(size_t i = 0; i < elements.size(); i += 3) {
-            e1 = elements[i]; e2 = elements[i+1]; e3 = elements[i+2];
-            p1 = points[e1];  p2 = points[e2];    p3 = points[e3];
-            n1 = normals[e1]; n2 = normals[e2];   n3 = normals[e3];
-            r_subdiv_face(_depth, p1, p2, p3, n1, n2, n3);
-        }
-    }glEnd();
-}
-
 void Model::r_subdiv_face(int n, Point3f p1, Point3f p2, Point3f p3,
                           Vector3f n1, Vector3f n2, Vector3f n3)
 {
     /* Draw the face if n <= 0 */
     if(n <= 0) {
-        glNormal(n1); glVertex(p1);
-        glNormal(n2); glVertex(p2);
-        glNormal(n3); glVertex(p3);
+        switch(lastmode) {
+        case DISPLAY_WIRES:
+            glNormal(n1); glVertex(p1);
+            glNormal(n2); glVertex(p2);
+            glNormal(n2); glVertex(p2);
+            glNormal(n3); glVertex(p3);
+            glNormal(n3); glVertex(p3);
+            glNormal(n1); glVertex(p1);
+            break;
+        case DISPLAY_POINTS:
+        case DISPLAY_MODEL:
+            glNormal(n1); glVertex(p1);
+            glNormal(n2); glVertex(p2);
+            glNormal(n3); glVertex(p3);
+            break;
+        }
     }else {
         Point3f pm1 = lerp(p1, p2), pm2 = lerp(p1, p3), pm3 = lerp(p2, p3);
         Vector3f nm1 = lerp(n1, n2), nm2 = lerp(n1, n3), nm3 = lerp(n2, n3);

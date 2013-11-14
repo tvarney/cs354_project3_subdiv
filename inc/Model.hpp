@@ -40,11 +40,6 @@ namespace cs354 {
         void subdiv_h();
         void subdiv_v();
         
-        void display_points();
-        void display_wire();
-        void display_gouraud();
-        void display_phong();
-        
         void r_subdiv_face(int n, Point3f p1, Point3f p2, Point3f p3,
                            Vector3f n1, Vector3f n2, Vector3f n3);
         

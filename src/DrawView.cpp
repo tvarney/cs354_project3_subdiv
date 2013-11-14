@@ -13,6 +13,7 @@ DrawView::~DrawView() {
 
 void DrawView::display() {
     glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
     
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -22,7 +23,6 @@ void DrawView::display() {
     float mid_x = float(win.dim.width) * 0.5;
     float mid_y = float(win.dim.height) * 0.5;
     
-    glDisable(GL_DEPTH_TEST);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(-mid_x, mid_x, mid_y, -mid_y, -1.0, 1.0);
@@ -74,7 +74,9 @@ void DrawView::display() {
     }
     glEnd();
 }
-void DrawView::init() { }
+void DrawView::init() {
+    BasicView::init();
+}
 void DrawView::end() { }
 
 void DrawView::keyPressed(int ch) {
@@ -82,8 +84,17 @@ void DrawView::keyPressed(int ch) {
     case 'q':
         std::exit(0);
         break;
-    case '/':
-    case '?':
+    case 'c':
+        points.erase(points.begin(), points.end());
+        View::PostRedisplay();
+        break;
+    case 'w': /*< Official key for this */
+    case 'h': /*< Rotation keys */
+    case 'j':
+    case 'k':
+    case 'l':
+    case KEY_UP:
+    case KEY_DOWN:
     case KEY_RIGHT:
     case KEY_LEFT:
         reinterpret_cast<DisplayView *>(cs354::display)->make_model(points);
@@ -162,4 +173,3 @@ Point3f DrawView::calcMousePos() {
     }
     return Point3f(x, y, 0);
 }
-

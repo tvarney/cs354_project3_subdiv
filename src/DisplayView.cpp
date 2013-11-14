@@ -8,6 +8,19 @@
 
 using namespace cs354;
 
+static const char *_dispmodes[] = {
+    "Points",
+    "Wireframe",
+    "Model"
+};
+static const char *_shadetypes[] = {
+    "Gouraud",
+    "Phong (Approximation)"
+};
+
+#define dispmodestr _dispmodes[dispmode]
+#define shadetypestr = _shadetypes[shadetype]
+
 DisplayView::DisplayView() {
     flat = false;
     mats.push_back(&(Material::Bronze));
@@ -16,21 +29,24 @@ DisplayView::DisplayView() {
     mats.push_back(&(Material::Plastic));
     matid = 0;
     mat = Material::Bronze;
+    model = NULL;
 }
 DisplayView::~DisplayView() {
     end();
 }
 
 void DisplayView::init() {
+    BasicView::init();
+    
     glPointSize(2.0f);
     glLineWidth(1.0f);
 
-    scale = 0.1f;
+    scale = 50.0f;
     rotation_y = rotation_z = 0.0f;
     rotspeed = 1.0f;
     dispmode = DISPLAY_MODEL;
     shadetype = SHADE_GOURAUD;
-    flat = false;
+    flat = true;
     matid = 0;
     light.setAmbient(Color::White);
     light.setDiffuse(Color::White);
@@ -38,6 +54,9 @@ void DisplayView::init() {
     light.setPosition(Point3f(5.0, 10.0, -52.0));
     
     mat = *(mats[0]);
+    
+    std::cout << "Display Mode: " << std::endl;
+    std::cout << "Shading Model: " << std::endl;
 }
 void DisplayView::end() {
     if(model) {
@@ -76,15 +95,6 @@ void DisplayView::display() {
     model->display(dispmode, shadetype);
 }
 
-static const char *_dispmodes[] = {
-    "Points",
-    "Wireframe",
-    "Model"
-};
-static const char *_shadetypes[] = {
-    "Gouraud",
-    "Phong (Approximation)"
-};
 void DisplayView::keyPressed(int ch) {
     /* I would like to dispatch a worker thread to do the computation, and draw
      * a 'working' indicator while the worker is not done. This gets rid of the
@@ -99,13 +109,13 @@ void DisplayView::keyPressed(int ch) {
         break;
     case 'e':
         dispmode = (dispmode == DISPLAY_MODEL ? DISPLAY_WIRES : DISPLAY_MODEL);
-        std::cout << "Display mode: " << _dispmodes[dispmode] << std::endl;
+        std::cout << "Display mode: " << dispmodestr << std::endl;
         View::PostRedisplay();
         break;
     case 'r':
         dispmode = (dispmode == DISPLAY_MODEL ?
                     DISPLAY_POINTS : DISPLAY_MODEL);
-        std::cout << "Display mode: " << _dispmodes[dispmode] << std::endl;
+        std::cout << "Display mode: " << dispmodestr << std::endl;
         View::PostRedisplay();
         break;
     case 'a':
@@ -128,8 +138,14 @@ void DisplayView::keyPressed(int ch) {
         View::PostRedisplay();
         break;
     case 's':
-        flat = !flat;
-        /*TODO: implement shininess swapping */
+        if(flat) {
+            flat = false;
+            mat.shininess = 128;
+        }else {
+            flat = true;
+            mat.shininess = mats[matid]->shininess;
+        }
+        model->setMaterial(mat);
         std::cout << "Shinieness: " << (flat ? "flat" : "shiny") << std::endl;
         View::PostRedisplay();
         break;
@@ -207,13 +223,24 @@ void DisplayView::motion(int x, int y) {
 }
 
 void DisplayView::make_model(const std::vector<Point3f> &control_points) {
+    BasicView::init();
+    
     if(control_points.size() < 3) {
         std::cout << "Cannot make model from < 3 control points" << std::endl;
         View::SetCurrent(*(cs354::draw));
         return;
     }
     
+    std::vector<Point3f> modpoints;
+    Point3f p;
+    for(size_t i = 0; i < control_points.size(); ++i) {
+        p = control_points[i];
+        p.x = p.x / (float(win.dim.width));
+        p.y = p.y / (float(win.dim.height));
+        modpoints.push_back(p);
+    }
+    
     vertical = 0;
     horizontal = 0;
-    model = new Model(control_points);
+    model = new Model(modpoints);
 }
