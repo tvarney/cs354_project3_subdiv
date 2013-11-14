@@ -3,7 +3,9 @@
 #define CS354_PROJECT3_SUBDIV_HPP
 
 #include <vector>
+#include "Light.hpp"
 #include "Material.hpp"
+#include "Model.hpp"
 #include "Point.hpp"
 #include "Vector.hpp"
 #include "View.hpp"
@@ -33,38 +35,29 @@ namespace cs354 {
         DisplayView();
         ~DisplayView();
         
-        virtual void display();
         virtual void init();
         virtual void end();
+        virtual void display();
         
         virtual void keyPressed(int ch);
+        virtual void motion(int x, int y);
         
-        void process(std::vector<Point3f> &points);
+        void make_model(const std::vector<Point3f> &control_points);
     protected:
-        void display_points();
-        void display_wire();
-        void display_gouraud();
-        void display_phong();
-        
-        void create_face(uint32_t p1, uint32_t p2, uint32_t p3);
-        void update_model();
-        
-        void subdivide_horiz();
-        void subdivide_vertical();
-        
-        float scale, rotation_y, rotation_z;
+        float scale, rotation_y, rotation_z, rotspeed;
         unsigned int vertical, horizontal;
-        int display_mode;
         
-        float lightpos[4];
+        DisplayMode dispmode;
+        ShadeType shadetype;
         
-        size_t npoints;
-        Point3f *points;
-        Vector3f *normals;
-        std::vector<uint32_t> elements;
+        Light light;
+        Model *model;
+        
+        /* Material variables */
+        bool flat;
+        Material mat;
         uint32_t matid;
         std::vector<const Material *> mats;
-        unsigned int display_list;
     };
     
     /* Handles to our two views */

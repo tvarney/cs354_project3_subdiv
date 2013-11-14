@@ -28,6 +28,18 @@ namespace cs354 {
     Point<T> operator*(const Matrix<T> &rhs, const Point<T> lhs) {
         return Point<T>(lhs);
     }
+    
+    /* Hopefully the compiler recognizes the floating point versions can be
+     * optimized to a multiply instead of a div.
+     */
+    template <typename T>
+    Point<T> lerp(const Point<T> p1, const Point<T> p2) {
+        return Point<T>(p1.x + p2.x, p1.y + p2.y, p1.z + p2.z) / ((T)2);
+    }
+    template <typename T>
+    Vector<T> lerp(const Vector<T> v1, const Vector<T> v2) {
+        return (v1 + v2) / ((T)2);
+    }
 }
 
 #endif

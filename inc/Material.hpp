@@ -20,6 +20,8 @@ namespace cs354 {
         Material(const Material &source);
         ~Material();
         
+        Material & operator=(const Material &rhs);
+        
         void use() const;
         void use(Face face) const;
         
