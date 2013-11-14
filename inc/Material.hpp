@@ -25,6 +25,7 @@ namespace cs354 {
         void use() const;
         void use(Face face) const;
         
+        static const Material Sapphire, Ruby;
         static const Material Brass, Bronze, Chrome, Copper, Gold, Silver;
         static const Material Plastic, Rubber;
         static const Material Red;

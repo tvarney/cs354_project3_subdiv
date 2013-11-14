@@ -23,12 +23,14 @@ static const char *_shadetypes[] = {
 
 DisplayView::DisplayView() {
     flat = false;
+    mats.push_back(&(Material::Sapphire));
+    mats.push_back(&(Material::Ruby));
     mats.push_back(&(Material::Bronze));
     mats.push_back(&(Material::Silver));
     mats.push_back(&(Material::Gold));
     mats.push_back(&(Material::Plastic));
     matid = 0;
-    mat = Material::Bronze;
+    mat = *(mats[0]);
     model = NULL;
 }
 DisplayView::~DisplayView() {
@@ -41,19 +43,19 @@ void DisplayView::init() {
     glPointSize(2.0f);
     glLineWidth(1.0f);
 
-    scale = 50.0f;
+    scale = 40.0f;
     rotation_y = rotation_z = 0.0f;
     rotspeed = 1.0f;
     dispmode = DISPLAY_MODEL;
     shadetype = SHADE_GOURAUD;
     flat = true;
     matid = 0;
+    mat = *(mats[0]);
+    
     light.setAmbient(Color::White);
     light.setDiffuse(Color::White);
     light.setSpecular(Color::White);
     light.setPosition(Point3f(5.0, 10.0, -52.0));
-    
-    mat = *(mats[0]);
     
     std::cout << "Display Mode: " << std::endl;
     std::cout << "Shading Model: " << std::endl;
@@ -140,7 +142,7 @@ void DisplayView::keyPressed(int ch) {
     case 's':
         if(flat) {
             flat = false;
-            mat.shininess = 128;
+            mat.shininess = 128 - mat.shininess;
         }else {
             flat = true;
             mat.shininess = mats[matid]->shininess;
@@ -243,4 +245,5 @@ void DisplayView::make_model(const std::vector<Point3f> &control_points) {
     vertical = 0;
     horizontal = 0;
     model = new Model(modpoints);
+    model->setMaterial(mat);
 }

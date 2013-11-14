@@ -93,6 +93,14 @@ void Material::use(Face face) const {
     glMaterialf(glface, GL_SHININESS, shininess);
 }
 
+const Material Material::Sapphire(Color(0.0215,  0.0215,  0.1745),
+                                  Color(0.07568, 0.07568, 0.61424),
+                                  Color(0.633,   0.633,   0.727811),
+                                  77);
+const Material Material::Ruby(Color(0.1745, 0.01175, 0.01175),
+                              Color(0.61424, 0.04136, 0.04136),
+                              Color(0.727811, 0.626959, 0.626959),
+                              77);
 const Material Material::Brass(Color(0.329412, 0.223529, 0.027451),
                                Color(0.780392, 0.568627, 0.113725),
                                Color(0.992157, 0.941176, 0.807843),
@@ -117,7 +125,7 @@ const Material Material::Silver(Color(0.19225, 0.19225, 0.19225),
                                 Color(0.50754, 0.50754, 0.50754),
                                 Color(0.508273, 0.508273, 0.508273),
                                 0.4 * 128);
-const Material Material::Plastic(Color(0.0, 0.0, 0.0),
+const Material Material::Plastic(Color(0.2, 0.2, 0.2),
                                  Color(0.55, 0.55, 0.55),
                                  Color(0.7, 0.7, 0.7),
                                  0.25 * 128);
